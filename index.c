@@ -40,6 +40,17 @@ typedef struct{
     char local[TAM];
 }Evento;
 
+
+void limpar_buffer(){
+    int c;
+    while((c = getchar()) != '\n' && c != EOF);
+}
+
+void enter(){
+    printf("\n" NEGRITO_BRANCO "Pressione Enter para continuar..." RESET);
+    limpar_buffer();
+}
+
 int main(){
     
     // Compatibilidade dos caracteres especiais
@@ -47,7 +58,7 @@ int main(){
         SetConsoleOutputCP(CP_UTF8);
     #endif
 
-    Evento info;
+    Evento *info = NULL;
 
     int opcao;
     bool erro = false;
@@ -57,44 +68,54 @@ int main(){
 
         printf("\n\n");
         printf("╔══════════════════════════════════════════════════╗\n");
-        printf("║                    AGENDA PESSOAL                ║\n");
+        printf("║" NEGRITO_BRANCO "                 AGENDA PESSOAL                   " RESET "║\n");
         printf("╠══════════════════════════════════════════════════╣\n");
         printf("║  1. Cadastrar novo evento                        ║\n");
         printf("║  2. Mostrar todos os eventos                     ║\n");
-        printf("║  3. Mostrar todos eventos de um data                          ║\n");
-        printf("║  4. Mostrar todos os eventos                     ║\n");
-        printf("║  5. Remover um evento                            ║\n");
+        printf("║  3. Buscar eventos por data                      ║\n");
+        printf("║  4. Buscar eventos por descrição                 ║\n");
+        printf("║  5. Remover evento (por data e hora)             ║\n");
         printf("║  6. Sair do programa                             ║\n");
         printf("╚══════════════════════════════════════════════════╝\n");
-        
+
         if(erro){
-            printf("");
+            printf("\n" VERMELHO "Ops! Essa opção não está no menu, tente novamente." RESET "\n");
             erro = false;
         }
+
+        printf("\n" AZUL "Escolha a sua opção: " RESET);
 
         if(scanf("%d", &opcao) != 1){
             opcao = -1;
         }
 
+        limpar_buffer();
+
         switch(opcao){
 
             case 1:
+
+                enter();
                 break;
             
             case 2:
+                enter();
                 break;
             
             case 3:
+                enter();
                 break;
             
             case 4:
+                enter();
                 break;
             
             case 5:
+                enter();
                 break;
             
             case 6:
-                printf("\n" NEGRITO_BRANCO "Obrigado por usar o sistema! Volte sempre." RESET "\n");
+                printf("\n" NEGRITO_BRANCO "Obrigado por usar o sistema! Volte sempre." RESET "\n\n");
                 return 0;
             default:
                 erro = true;
