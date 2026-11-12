@@ -1,3 +1,15 @@
+/*
+     ____ ____ ____ ____   ____ ____ ____ ____
+    ||R |||i |||a |||n || ||L |||u |||i |||z ||
+    ||__|||__|||__|||__|| ||__|||__|||__|||__||
+    |/__\|/__\|/__\|/__\| |/__\|/__\|/__\|/__\|
+
+     ____ ____ ____ ____ ____ ____ ____ ____ ____   ____ ____ ____ ____
+    ||G |||u |||i |||l |||h |||e |||r |||m |||e || ||P |||i |||l |||z ||
+    ||__|||__|||__|||__|||__|||__|||__|||__|||__|| ||__|||__|||__|||__||
+    |/__\|/__\|/__\|/__\|/__\|/__\|/__\|/__\|/__\| |/__\|/__\|/__\|/__\|
+*/
+
 #include <stdio.h>
 #include <stdbool.h>
 #include <math.h>
@@ -21,17 +33,21 @@
 // Cores em Negrito
 #define NEGRITO_BRANCO   "\033[1;97m"
 
+// Tipo Data
 typedef struct{
     int dia;
     int mes;
     int ano;
 }Data;
 
+// Tipo Horario
 typedef struct{
     int hora;
     int minuto;
 }Horario;
 
+
+// Tipo Evento
 typedef struct{
     Data data;
     Horario inicio;
@@ -40,6 +56,7 @@ typedef struct{
     char local[TAM];
 }Evento;
 
+// ---------- Utilitários ----------
 
 void limpar_buffer(){
     int c;
@@ -49,6 +66,14 @@ void limpar_buffer(){
 void enter(){
     printf("\n" NEGRITO_BRANCO "Pressione Enter para continuar..." RESET);
     limpar_buffer();
+}
+
+// ---------- Opções do menu ----------
+
+
+// 1.
+void cadastrar_evento(){
+
 }
 
 int main(){
