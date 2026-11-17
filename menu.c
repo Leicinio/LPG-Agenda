@@ -107,7 +107,7 @@ void add_evento(Evento **listaEventos, int *qtdEventos){
     Evento novo;
 
     printf("Insira a descrição: ");
-    scanf("%s", novo.descricao);
+    scanf("%[^\n]", novo.descricao);
 
     printf("Insira a data (DD MM AAAA): ");
     scanf("%d %d %d", &novo.data.dia, &novo.data.mes, &novo.data.ano);
@@ -132,7 +132,7 @@ void add_evento(Evento **listaEventos, int *qtdEventos){
 
         for(int i = 0; i < *qtdEventos; i++){
             if(compara_data((*listaEventos)[i], novo) == 1){
-                printf("FALHA! Desista.");
+                printf("Ops! Encontramos um conflitos entre datas ou horarios");
 
             }else if(compara_data((*listaEventos)[i], novo) == 2){
                 for(int j = *qtdEventos - 1; j >= i; j--){
