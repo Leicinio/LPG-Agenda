@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <math.h>
+#include <stdlib.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -68,10 +69,98 @@ void enter(){
     limpar_buffer();
 }
 
+//Retorna 0 se evento1 for anterior ao evento2, 1 se evento1 for no mesmo dia/mes/ano do evento2, 2 se evento1 for posterior ao evento2
+int compara_data(Evento evento1, Evento evento2){
+    if (evento1.data.ano < evento2.data.ano)
+        return 0;
+    if (evento1.data.ano > evento2.data.ano)
+        return 2;
+
+    if (evento1.data.mes < evento2.data.mes)
+        return 0;
+    if (evento1.data.mes > evento2.data.mes)
+        return 2;
+
+    if (evento1.data.dia < evento2.data.dia)
+        return 0;
+    if (evento1.data.dia > evento2.data.dia)
+        return 2;
+
+    if (evento1.inicio.hora < evento2.inicio.hora)
+        return 0;
+    if (evento1.inicio.hora > evento2.inicio.hora)
+        return 2;
+
+    if (evento1.inicio.minuto < evento2.inicio.minuto)
+        return 0;
+    if (evento1.inicio.minuto > evento2.inicio.minuto)
+        return 2;
+
+    return 1;
+}
+
 // ---------- Opções do menu ----------
 
 
+// 1. (alternativa, avaliar melhor opcao depois)
+void add_evento(Evento **listaEventos, int *qtdEventos){
+    Evento novo;
+
+    printf("Insira a descrição: ");
+    scanf("%s", novo.descricao);
+
+    printf("Insira a data (DD MM AAAA): ");
+    scanf("%d %d %d", &novo.data.dia, &novo.data.mes, &novo.data.ano);
+
+    printf("Insira o horário de início (HH MM): ");
+    scanf("%d %d", &novo.inicio.hora, &novo.inicio.minuto);
+
+    printf("Insira o horário de término (HH MM): ");
+    scanf("%d %d", &novo.fim.hora, &novo.fim.minuto);
+
+    //Verificar conflito
+
+    //Adicionar a lista
+    Evento *a = realloc(*listaEventos, sizeof(Evento) * (*qtdEventos + 1));
+    if(a == NULL){
+        printf("Erro de memória! Nada foi registrado.");
+    }else{
+        //Adicionar no ponto correto
+
+        *listaEventos = a;
+        bool adicionou = false;
+
+        for(int i = 0; i < *qtdEventos; i++){
+            if(compara_data((*listaEventos)[i], novo) == 1){
+                printf("FALHA! Desista.");
+
+            }else if(compara_data((*listaEventos)[i], novo) == 2){
+                for(int j = *qtdEventos - 1; j >= i; j--){
+                    (*listaEventos)[j+1] = (*listaEventos)[j];
+                }
+                (*listaEventos)[i] = novo;
+                (*qtdEventos)++;
+                adicionou = true;
+                break;
+            }
+        }
+        if(!adicionou){
+            (*listaEventos)[(*qtdEventos)] = novo;
+            (*qtdEventos)++;
+        }   
+    }
+}
+
+//2.
+void print_eventos(Evento *listaEventos, int qtdEventos){
+    printf("EVENTOS:\n\n");
+    for(int i = 0; i < qtdEventos; i++){
+        printf("\nEvento: %s | Data: %d/%d/%d", listaEventos[i].descricao, listaEventos[i].data.dia, listaEventos[i].data.mes, listaEventos[i].data.ano);
+    }
+}
+
 // 1.
+/*
 void cadastrar_evento(Evento, **info, *contador){
     (*contador)++;
 
@@ -132,7 +221,7 @@ void cadastrar_evento(Evento, **info, *contador){
 
     } while (!horario_valido);
 }
-
+*/
 int main(){
     
     // Compatibilidade dos caracteres especiais
@@ -140,7 +229,7 @@ int main(){
         SetConsoleOutputCP(CP_UTF8);
     #endif
 
-    login();
+    //login();
 
     Evento *info = NULL;
 
@@ -149,6 +238,12 @@ int main(){
 
 
     int contador = 0;
+
+
+    //Alternativa da 1
+    Evento *listaEventos = malloc(sizeof(Evento));
+    int qtdEventos = 0;
+
 
     do{
         printf("\033[H\033[2J");
@@ -181,11 +276,13 @@ int main(){
         switch(opcao){
 
             case 1:
-                cadastrar_evento(Evento, &info, &contador);
+                add_evento(&listaEventos, &qtdEventos);
+                //cadastrar_evento(Evento, &info, &contador);
                 enter();
                 break;
             
             case 2:
+                print_eventos(listaEventos, qtdEventos);
                 enter();
                 break;
             
