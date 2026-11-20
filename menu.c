@@ -14,6 +14,8 @@
 #include <stdbool.h>
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -47,7 +49,6 @@ typedef struct{
     int minuto;
 }Horario;
 
-
 // Tipo Evento
 typedef struct{
     Data data;
@@ -67,6 +68,31 @@ void limpar_buffer(){
 void enter(){
     printf("\n" NEGRITO_BRANCO "Pressione Enter para continuar..." RESET);
     limpar_buffer();
+}
+
+bool exite_evento(int qtdEventos){
+    if(qtdEventos == 0){
+        printf(VERMELHO "\nVocê precisa criar um novo evento!" RESET "\n");
+        return false;
+    }
+
+    return true;
+}
+
+void imprimir_descricao_destacada(Evento *listaEventos, int i, char *busca) {
+    int tam_desc = (int)strlen(listaEventos[i].descricao);
+    char alvo = (char)tolower((unsigned char)*busca);
+
+    printf("Descrição: ");
+    for (char *p = listaEventos[i].descricao; p < listaEventos[i].descricao + tam_desc; p++) {
+        char atual = (char)tolower((unsigned char)*p);
+        if (atual == alvo) {
+            printf(VERDE "%c" RESET, *p);
+        } else {
+            printf("%c", *p);
+        }
+    }
+    printf("\n");
 }
 
 //Retorna 0 se evento1 for anterior ao evento2, 1 se evento1 for no mesmo dia/mes/ano do evento2, 2 se evento1 for posterior ao evento2
@@ -106,33 +132,45 @@ int compara_data(Evento evento1, Evento evento2){
 void add_evento(Evento **listaEventos, int *qtdEventos){
     Evento novo;
 
-    printf("Insira a descrição: ");
-    scanf("%[^\n]", novo.descricao);
-
-    printf("Insira a data (DD MM AAAA): ");
+    printf("\nInsira a data (DD MM AAAA): ");
     scanf("%d %d %d", &novo.data.dia, &novo.data.mes, &novo.data.ano);
 
-    printf("Insira o horário de início (HH MM): ");
+    limpar_buffer();
+
+    printf("\nInsira o horário de início (HH MM): ");
     scanf("%d %d", &novo.inicio.hora, &novo.inicio.minuto);
 
-    printf("Insira o horário de término (HH MM): ");
+    limpar_buffer();
+
+    printf("\nInsira o horário de término (HH MM): ");
     scanf("%d %d", &novo.fim.hora, &novo.fim.minuto);
+
+    limpar_buffer();
+
+    printf("\nInsira a descrição: ");
+    scanf("%[^\n]", novo.descricao);
+
+    limpar_buffer();
+
+    printf("\nInsira o local: ");
+    scanf("%[^\n]", novo.local);
+
+    limpar_buffer();
 
     //Verificar conflito
 
     //Adicionar a lista
     Evento *a = realloc(*listaEventos, sizeof(Evento) * (*qtdEventos + 1));
     if(a == NULL){
-        printf("Erro de memória! Nada foi registrado.");
+        printf(AMARELO "\nErro de memória! Nada foi registrado." RESET);
     }else{
-        //Adicionar no ponto correto
 
         *listaEventos = a;
         bool adicionou = false;
 
         for(int i = 0; i < *qtdEventos; i++){
             if(compara_data((*listaEventos)[i], novo) == 1){
-                printf("Ops! Encontramos um conflitos entre datas ou horarios");
+                printf(VERMELHO "\nOps! Encontramos um conflitos entre datas ou horarios" RESET);
 
             }else if(compara_data((*listaEventos)[i], novo) == 2){
                 for(int j = *qtdEventos - 1; j >= i; j--){
@@ -141,21 +179,82 @@ void add_evento(Evento **listaEventos, int *qtdEventos){
                 (*listaEventos)[i] = novo;
                 (*qtdEventos)++;
                 adicionou = true;
+                printf(VERDE "\nEvento adicionado com sucesso!\n" RESET);
                 break;
             }
         }
         if(!adicionou){
+            printf(VERDE "\nEvento adicionado com sucesso!\n" RESET);
             (*listaEventos)[(*qtdEventos)] = novo;
             (*qtdEventos)++;
         }   
     }
+
 }
 
-//2.
-void print_eventos(Evento *listaEventos, int qtdEventos){
-    printf("EVENTOS:\n\n");
+//2. Mostra todos os eventos já adicionados
+void mostrar_todos_eventos(Evento *listaEventos, int qtdEventos){
     for(int i = 0; i < qtdEventos; i++){
-        printf("\nEvento: %s | Data: %d/%d/%d", listaEventos[i].descricao, listaEventos[i].data.dia, listaEventos[i].data.mes, listaEventos[i].data.ano);
+        printf("\n");
+        printf("┌───────────────────────┐\n");
+        printf("│       " NEGRITO_BRANCO "EVENTO %02d" RESET "       │\n", i + 1);
+        printf("└───────────────────────┘\n");
+        printf("%02d/%02d/%04d | %02d:%02d - %02d:%02d\n",
+               listaEventos[i].data.dia, listaEventos[i].data.mes, listaEventos[i].data.ano,
+               listaEventos[i].inicio.hora, listaEventos[i].inicio.minuto,
+               listaEventos[i].fim.hora, listaEventos[i].fim.minuto);
+        printf("Descrição: %s\n", listaEventos[i].descricao);
+        printf("Local: %s\n", listaEventos[i].local);
+    }
+}
+
+//3. Busca eventos por meio de uma data
+void busca_data(Evento *listaEventos, int qtdEventos){
+    int dia, mes, ano;
+
+    printf("\nInsira uma data para achar os eventos (DD MM AAAA): ");
+    scanf("%d %d %d", &dia, &mes, &ano);
+
+    limpar_buffer();
+
+    for(int i = 0; i < qtdEventos; i++){
+        if(listaEventos[i].data.dia == dia && listaEventos[i].data.mes == mes && listaEventos[i].data.ano == ano){
+            printf("\n");
+            printf("┌───────────────────────┐\n");
+            printf("│       " NEGRITO_BRANCO "EVENTO %02d" RESET "       │\n", i + 1);
+            printf("└───────────────────────┘\n");
+            printf(VERDE "%02d/%02d/%04d" RESET " | %02d:%02d - %02d:%02d\n",
+                listaEventos[i].data.dia, listaEventos[i].data.mes, listaEventos[i].data.ano,
+                listaEventos[i].inicio.hora, listaEventos[i].inicio.minuto,
+                listaEventos[i].fim.hora, listaEventos[i].fim.minuto);
+            printf("Descrição: %s\n", listaEventos[i].descricao);
+            printf("Local: %s\n", listaEventos[i].local);
+        }
+    }
+}
+
+//4. Busca eventos a partir de uma descrição
+void busca_descricao(Evento *listaEventos, int qtdEventos){
+    char descricao[TAM];
+
+    printf("\nInsira uma descrição para achar os eventos: ");
+    scanf("%[^\n]", descricao);
+
+    limpar_buffer();
+
+    for(int i = 0; i < qtdEventos; i++){
+        if(strstr(listaEventos[i].descricao, descricao) != 0){
+            printf("\n");
+            printf("┌───────────────────────┐\n");
+            printf("│       " NEGRITO_BRANCO "EVENTO %02d" RESET "       │\n", i + 1);
+            printf("└───────────────────────┘\n");
+            printf("%02d/%02d/%04d | %02d:%02d - %02d:%02d\n",
+                listaEventos[i].data.dia, listaEventos[i].data.mes, listaEventos[i].data.ano,
+                listaEventos[i].inicio.hora, listaEventos[i].inicio.minuto,
+                listaEventos[i].fim.hora, listaEventos[i].fim.minuto);
+            imprimir_descricao_destacada(listaEventos, i , descricao);
+            printf("Local: %s\n", listaEventos[i].local);
+        }
     }
 }
 
@@ -229,18 +328,9 @@ int main(){
         SetConsoleOutputCP(CP_UTF8);
     #endif
 
-    //login();
-
-    Evento *info = NULL;
-
     int opcao;
     bool erro = false;
 
-
-    int contador = 0;
-
-
-    //Alternativa da 1
     Evento *listaEventos = malloc(sizeof(Evento));
     int qtdEventos = 0;
 
@@ -277,30 +367,40 @@ int main(){
 
             case 1:
                 add_evento(&listaEventos, &qtdEventos);
-                //cadastrar_evento(Evento, &info, &contador);
                 enter();
                 break;
             
             case 2:
-                print_eventos(listaEventos, qtdEventos);
+                if(exite_evento(qtdEventos)){
+                    mostrar_todos_eventos(listaEventos, qtdEventos);
+                }
                 enter();
                 break;
             
             case 3:
+                if(exite_evento(qtdEventos)){
+                    busca_data(listaEventos, qtdEventos);
+                }
                 enter();
                 break;
             
             case 4:
+                if(exite_evento(qtdEventos)){
+                    busca_descricao(listaEventos, qtdEventos);
+                }
                 enter();
                 break;
             
             case 5:
+                if(exite_evento(qtdEventos)){
+                    
+                }
                 enter();
                 break;
             
             case 6:
                 printf("\n" NEGRITO_BRANCO "Obrigado por usar o sistema! Volte sempre." RESET "\n\n");
-                free(info);
+                free(listaEventos);
                 return 0;
             default:
                 erro = true;
