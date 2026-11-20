@@ -211,6 +211,7 @@ void mostrar_todos_eventos(Evento *listaEventos, int qtdEventos){
 //3. Busca eventos por meio de uma data
 void busca_data(Evento *listaEventos, int qtdEventos){
     int dia, mes, ano;
+    int referencia = 0;
 
     printf("\nInsira uma data para achar os eventos (DD MM AAAA): ");
     scanf("%d %d %d", &dia, &mes, &ano);
@@ -219,6 +220,7 @@ void busca_data(Evento *listaEventos, int qtdEventos){
 
     for(int i = 0; i < qtdEventos; i++){
         if(listaEventos[i].data.dia == dia && listaEventos[i].data.mes == mes && listaEventos[i].data.ano == ano){
+            referencia++;
             printf("\n");
             printf("┌───────────────────────┐\n");
             printf("│       " NEGRITO_BRANCO "EVENTO %02d" RESET "       │\n", i + 1);
@@ -231,19 +233,40 @@ void busca_data(Evento *listaEventos, int qtdEventos){
             printf("Local: %s\n", listaEventos[i].local);
         }
     }
+
+    if(referencia == 0){
+        printf(AMARELO "\nDesculpa, mas não foi encontrado nenhum evento com essa data!\n" RESET);
+    }
 }
 
 //4. Busca eventos a partir de uma descrição
 void busca_descricao(Evento *listaEventos, int qtdEventos){
     char descricao[TAM];
+    char busca_min[TAM];
+    int referencia = 0;
 
     printf("\nInsira uma descrição para achar os eventos: ");
     scanf("%[^\n]", descricao);
 
     limpar_buffer();
 
+    int tam_busca = (int)strlen(descricao);
+    for(int k = 0; k < tam_busca; k++){
+        busca_min[k] = (char)tolower((unsigned char)descricao[k]);
+    }
+    busca_min[tam_busca] = '\0';
+
     for(int i = 0; i < qtdEventos; i++){
-        if(strstr(listaEventos[i].descricao, descricao) != 0){
+        char desc_min[TAM];
+        int tam_desc = (int)strlen(listaEventos[i].descricao);
+
+        for(int k = 0; k < tam_desc; k++){
+            desc_min[k] = (char)tolower((unsigned char)listaEventos[i].descricao[k]);
+        }
+        desc_min[tam_desc] = '\0';
+
+        if(strstr(desc_min, busca_min) != NULL){
+            referencia++;
             printf("\n");
             printf("┌───────────────────────┐\n");
             printf("│       " NEGRITO_BRANCO "EVENTO %02d" RESET "       │\n", i + 1);
@@ -252,9 +275,13 @@ void busca_descricao(Evento *listaEventos, int qtdEventos){
                 listaEventos[i].data.dia, listaEventos[i].data.mes, listaEventos[i].data.ano,
                 listaEventos[i].inicio.hora, listaEventos[i].inicio.minuto,
                 listaEventos[i].fim.hora, listaEventos[i].fim.minuto);
-            imprimir_descricao_destacada(listaEventos, i , descricao);
+            imprimir_descricao_destacada(listaEventos, i, descricao);
             printf("Local: %s\n", listaEventos[i].local);
         }
+    }
+
+    if(referencia == 0){
+        printf(AMARELO "\nDesculpa, mas não foi encontrado nenhum evento com essa descrição!\n" RESET);
     }
 }
 
