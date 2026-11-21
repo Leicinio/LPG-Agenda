@@ -248,8 +248,6 @@ void busca_descricao(Evento *listaEventos, int qtdEventos){
     printf("\nInsira uma descrição para achar os eventos: ");
     scanf("%[^\n]", descricao);
 
-    limpar_buffer();
-
     int tam_busca = (int)strlen(descricao);
     for(int k = 0; k < tam_busca; k++){
         busca_min[k] = (char)tolower((unsigned char)descricao[k]);
@@ -283,6 +281,8 @@ void busca_descricao(Evento *listaEventos, int qtdEventos){
     if(referencia == 0){
         printf(AMARELO "\nDesculpa, mas não foi encontrado nenhum evento com essa descrição!\n" RESET);
     }
+
+    limpar_buffer();
 }
 
 // 1.
