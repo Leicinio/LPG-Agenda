@@ -286,7 +286,6 @@ void busca_descricao(Evento *listaEventos, int qtdEventos){
         printf(AMARELO "\nDesculpa, mas não foi encontrado nenhum evento com essa descrição!\n" RESET);
     }
 
-    limpar_buffer();
 }
 
 // 1.
