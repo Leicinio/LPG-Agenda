@@ -246,7 +246,11 @@ void busca_descricao(Evento *listaEventos, int qtdEventos){
     int referencia = 0;
 
     printf("\nInsira uma descrição para achar os eventos: ");
-    scanf("%[^\n]", descricao);
+    if(fgets(descricao, TAM, stdin) != NULL){
+        descricao[strcspn(descricao, "\n")] = '\0';
+    }else{
+     descricao[0] = '\0';
+    }
 
     int tam_busca = (int)strlen(descricao);
     for(int k = 0; k < tam_busca; k++){
