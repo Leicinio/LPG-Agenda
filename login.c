@@ -362,6 +362,12 @@ char *usuario(void){
 
     fclose(arquivo_usuarios);
 
+    #ifdef _WIN32
+        system("cls");
+    #else
+        system("clear");
+    #endif
+
     return retorna_caminho;
 
 }

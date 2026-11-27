@@ -64,31 +64,52 @@ typedef struct{
 
 // ---------- Utilitários ----------
 
- void le_arquivo(FILE *arquivo, Evento *dado) {
-
-    fscanf(arquivo, "Data: %d/%d/%d",
-            &dado->data.dia, 
-            &dado->data.mes, &dado->data.ano);
-    
-    fscanf(arquivo, " Horario de inicio e fim: %d:%d - %d:%d", 
-            &dado->inicio.hora, &dado->inicio.minuto,
-            &dado->fim.hora, &dado->fim.minuto);
-
-    int c;
-    while ((c = fgetc(arquivo)) != '\n' && c != EOF);
-
-    if (fgets(dado->descricao, TAM, arquivo) == NULL) {
-        return;
-    }
-    dado->descricao[strcspn(dado->descricao, "\n")] = '\0';
-
-    if (fgets(dado->local, TAM, arquivo) == NULL) {
-        return;
-    }
-    dado->local[strcspn(dado->local, "\n")] = '\0';
-
-    return;
+static void remover_quebra_linha(char *str) {
+    str[strcspn(str, "\r\n")] = '\0';
 }
+
+static void extrair_apos_dois_pontos(const char *linha, char *destino, size_t tam_destino) {
+    const char *pos = strchr(linha, ':');
+    if (pos != NULL) {
+        pos++; 
+        while (*pos == ' ') {
+            pos++; 
+        }
+        snprintf(destino, tam_destino, "%s", pos);
+    } else {
+        snprintf(destino, tam_destino, "%s", linha);
+    }
+}
+
+bool le_arquivo(FILE *arquivo, Evento *dado) {
+    char linha[256];
+
+    if (fgets(linha, sizeof(linha), arquivo) == NULL) return false;
+    remover_quebra_linha(linha);
+    if (sscanf(linha, "Data: %d/%d/%d",
+               &dado->data.dia, &dado->data.mes, &dado->data.ano) != 3) {
+        return false;
+    }
+
+    if (fgets(linha, sizeof(linha), arquivo) == NULL) return false;
+    remover_quebra_linha(linha);
+    if (sscanf(linha, "Horario de inicio e fim: %d:%d - %d:%d",
+               &dado->inicio.hora, &dado->inicio.minuto,
+               &dado->fim.hora, &dado->fim.minuto) != 4) {
+        return false;
+    }
+
+    if (fgets(linha, sizeof(linha), arquivo) == NULL) return false;
+    remover_quebra_linha(linha);
+    extrair_apos_dois_pontos(linha, dado->descricao, TAM);
+
+    if (fgets(linha, sizeof(linha), arquivo) == NULL) return false;
+    remover_quebra_linha(linha);
+    extrair_apos_dois_pontos(linha, dado->local, TAM);
+
+    return true;
+}
+
 
 void limpar_buffer(){
     int c;
@@ -201,7 +222,7 @@ void insira_data(Evento *cadastrar){
         }
 
         if(dia < 1 || dia > total_dias_mes[mes - 1]){
-            printf("\n" AMARELO "Ops! Esse dia não existe no mês informado. Tente novamente!" RESET);
+            printf("\n" AMARELO "Ops! Esse dia não existe no mês informado. Tente novamente!" RESET "\n");
             continue;
         }
 
@@ -570,6 +591,9 @@ int main(){
         return 0;
     }
 
+    int ch;
+    while ((ch = fgetc(arquivo)) != '\n' && ch != EOF);
+
     Evento *temp = realloc(listaEventos, sizeof(Evento) * (qtdEventos));
     if(temp != NULL){
         listaEventos = temp;
@@ -645,10 +669,15 @@ int main(){
             
             case 6:
                 arquivo = fopen(endereco_do_arquivo, "w");
+                if (arquivo == NULL) {
+                    printf("\n" VERMELHO "Erro ao abrir o arquivo para salvar!" RESET "\n");
+                    break;
+                }
+
                 fprintf(arquivo, "Quantidade de eventos: %d\n", qtdEventos);
                 for(int i = 0; i < qtdEventos; i++){
                     fprintf(arquivo, "Data: %d/%d/%d\n", listaEventos[i].data.dia, listaEventos[i].data.mes, listaEventos[i].data.ano);    
-                    fprintf(arquivo, "Horaio de inicio e fim: %d:%d - %d:%d\n", listaEventos[i].inicio.hora, listaEventos[i].inicio.minuto, listaEventos[i].fim.hora, listaEventos[i].fim.minuto);
+                    fprintf(arquivo, "Horario de inicio e fim: %d:%d - %d:%d\n", listaEventos[i].inicio.hora, listaEventos[i].inicio.minuto, listaEventos[i].fim.hora, listaEventos[i].fim.minuto);
                     fprintf(arquivo, "Descrição: %s\n", listaEventos[i].descricao);
                     fprintf(arquivo, "Local: %s\n", listaEventos[i].local);
                 }
