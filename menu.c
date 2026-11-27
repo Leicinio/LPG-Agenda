@@ -10,16 +10,20 @@
     |/__\|/__\|/__\|/__\|/__\|/__\|/__\|/__\|/__\| |/__\|/__\|/__\|/__\|
 */
 
+#include <stddef.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
+#include <ctype.h>  
+
+#include "login.h"
 
 #ifdef _WIN32
 #include <windows.h>
 #endif
+
+FILE *arquivo;
 
 // Tamanho dos caracteres
 #define TAM 50
@@ -59,6 +63,32 @@ typedef struct{
 }Evento;
 
 // ---------- Utilitários ----------
+
+ void le_arquivo(FILE *arquivo, Evento *dado) {
+
+    fscanf(arquivo, "Data: %d/%d/%d",
+            &dado->data.dia, 
+            &dado->data.mes, &dado->data.ano);
+    
+    fscanf(arquivo, " Horario de inicio e fim: %d:%d - %d:%d", 
+            &dado->inicio.hora, &dado->inicio.minuto,
+            &dado->fim.hora, &dado->fim.minuto);
+
+    int c;
+    while ((c = fgetc(arquivo)) != '\n' && c != EOF);
+
+    if (fgets(dado->descricao, TAM, arquivo) == NULL) {
+        return;
+    }
+    dado->descricao[strcspn(dado->descricao, "\n")] = '\0';
+
+    if (fgets(dado->local, TAM, arquivo) == NULL) {
+        return;
+    }
+    dado->local[strcspn(dado->local, "\n")] = '\0';
+
+    return;
+}
 
 void limpar_buffer(){
     int c;
@@ -144,58 +174,215 @@ int compara_data(Evento evento1, Evento evento2){
     return 1;
 }
 
+void insira_data(Evento *cadastrar){
+
+    bool deu_certo = false;
+    const int total_dias_mes[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    int dia, mes, ano;
+    do{
+
+        printf("\nInsira a data (DD MM AAAA): ");
+        if(scanf("%d %d %d", &dia, &mes, &ano ) != 3){
+            limpar_buffer();
+            printf("\n" AMARELO "Ops! Formato inválido. Digite dia, mês e ano separados por espaços" RESET "\n");
+            continue;
+        }
+
+        limpar_buffer();
+
+        if(ano < 1){
+            printf("\n" AMARELO  "Ops! O ano precisa ser maior que zero. Tente novamente!" RESET "\n");
+            continue;
+        }
+
+        if(mes < 1 || mes > 12){
+            printf("\n" AMARELO "Ops! O mês precisa estar entre 1 e 12. Tente novamente!" RESET "\n");
+            continue;
+        }
+
+        if(dia < 1 || dia > total_dias_mes[mes - 1]){
+            printf("\n" AMARELO "Ops! Esse dia não existe no mês informado. Tente novamente!" RESET);
+            continue;
+        }
+
+        cadastrar->data.dia = dia;
+        cadastrar->data.mes = mes;
+        cadastrar->data.ano = ano;
+
+        deu_certo = true;
+
+
+    }while(!deu_certo);
+
+}
+
+void insira_hora_inicio_fim(Evento *cadastrar){
+    
+    bool deu_certo = false;
+    // LOOP inserir horario de inicio
+    do{
+
+        int hora_inicio, minuto_inicio;
+
+        printf("\nInsira o horário de inicio (HH MM): ");
+        if(scanf("%d %d", &hora_inicio, &minuto_inicio) != 2){
+            limpar_buffer();
+            printf("\n" AMARELO "Ops! Digite apenas números para o horário de início!" RESET "\n");
+            continue;
+        }
+
+        limpar_buffer();
+
+        if(hora_inicio < 0 || hora_inicio > 23){
+            printf("\n" AMARELO "Ops! A hora de início deve ser entre 0 e 23. Tente novamente!" RESET "\n");
+            continue;
+        }
+            
+        if(minuto_inicio < 0 || minuto_inicio > 59){
+            printf("\n" AMARELO "Ops! Os minutos de início devem ser entre 0 e 59. Tente novamente!" RESET "\n");
+            continue;
+        }
+
+        cadastrar->inicio.hora = hora_inicio;
+        cadastrar->inicio.minuto = minuto_inicio;
+
+        deu_certo = true;
+
+    }while(!deu_certo);
+
+    deu_certo = false;
+
+    // LOOP inserir horario de fim
+    do{
+
+        int hora_fim, minuto_fim;
+
+        printf("\nInsira o harario de fim (HH MM): ");
+        if(scanf("%d %d", &hora_fim, &minuto_fim) != 2){
+            limpar_buffer();
+            printf("\n" AMARELO "Ops! Digite apenas números para o horário de fim!" RESET "\n");
+            continue;
+        }
+
+        limpar_buffer();
+
+        if(hora_fim < 0 || hora_fim > 23){
+            printf("\n" AMARELO "Ops! A hora de fim deve ser entre 0 e 23. Tente novamente!" RESET "\n");
+            continue;
+        }
+
+        if(minuto_fim < 0 || minuto_fim > 59){
+            printf("\n" AMARELO "Ops! Os minutos de fim devem ser entre 0 e 59. Tente novamente!" RESET "\n");
+            continue;
+        }
+
+        cadastrar->fim.hora = hora_fim;
+        cadastrar->fim.minuto = minuto_fim;
+
+        deu_certo = true;
+
+    }while(!deu_certo);
+
+}
+
+void insira_descricao_local(Evento *cadastrar){
+
+    bool deu_certo = false;
+
+    do{
+        
+        char descricao[TAM] = "";
+
+        printf("\nInsira uma descrição: ");
+        if(fgets(descricao, TAM, stdin) != NULL){
+            descricao[strcspn(descricao, "\n")] = '\0';
+        }else{
+            printf("\n" VERMELHO "Erro ao ler a descrição. Tente novamente!" RESET "\n");
+            continue;
+        }
+
+        if(descricao[0] == '\0'){
+            printf("\n" AMARELO "Ei! A descrição não pode ficar vazia. Escreva o que vai acontecer!" RESET "\n");
+            continue;
+        }
+
+        size_t len = strlen(descricao);
+
+        for(size_t i = 0; i < len; i++){
+            cadastrar->descricao[i] = descricao[i];
+        }
+        
+        cadastrar->descricao[len] = '\0';
+
+        deu_certo = true;
+
+    }while(!deu_certo);
+
+    deu_certo = false;
+
+    do{
+
+        char local[TAM] = "";
+
+        printf("\nInsira um local: ");
+        if(fgets(local, TAM, stdin) != NULL){
+            local[strcspn(local, "\n")] = '\0';
+        }else{
+            printf("\n" VERMELHO "Erro ao ler o local. Tente novamente!" RESET "\n");
+            continue;
+        }
+
+        if(local[0] == '\0'){
+            printf("\n" AMARELO "Ei! O local não pode ficar vazio. Informe onde será o evento!" RESET "\n");
+            continue;
+        }
+
+        size_t len = strlen(local);
+
+        for(size_t i = 0; i < len; i++){
+            cadastrar->local[i] = local[i];
+        }
+
+        cadastrar->local[len] = '\0';
+
+        deu_certo = true;
+
+
+    }while(!deu_certo);
+}
+
 // ---------- Opções do menu ----------
 
 
 // 1. (alternativa, avaliar melhor opcao depois)
 void add_evento(Evento **listaEventos, int *qtdEventos){
-    Evento novo;
+    Evento cadastrar;
 
-    printf("\nInsira a data (DD MM AAAA): ");
-    scanf("%d %d %d", &novo.data.dia, &novo.data.mes, &novo.data.ano);
+    insira_data(&cadastrar);
+    
+    insira_hora_inicio_fim(&cadastrar);
 
-    limpar_buffer();
-
-    printf("\nInsira o horário de início (HH MM): ");
-    scanf("%d %d", &novo.inicio.hora, &novo.inicio.minuto);
-
-    limpar_buffer();
-
-    printf("\nInsira o horário de término (HH MM): ");
-    scanf("%d %d", &novo.fim.hora, &novo.fim.minuto);
-
-    limpar_buffer();
-
-    printf("\nInsira a descrição: ");
-    scanf("%[^\n]", novo.descricao);
-
-    limpar_buffer();
-
-    printf("\nInsira o local: ");
-    scanf("%[^\n]", novo.local);
-
-    limpar_buffer();
+    insira_descricao_local(&cadastrar);
 
     //Verificar conflito
-
-    //Adicionar a lista
     Evento *a = realloc(*listaEventos, sizeof(Evento) * (*qtdEventos + 1));
     if(a == NULL){
-        printf(AMARELO "\nErro de memória! Nada foi registrado." RESET);
+        printf("\n" VERMELHO "Erro de memória! Nada foi registrado." RESET "\n");
+        return;
     }else{
 
         *listaEventos = a;
         bool adicionou = false;
 
         for(int i = 0; i < *qtdEventos; i++){
-            if(compara_todos((*listaEventos)[i], novo) == 1){
-                printf(VERMELHO "\nOps! Encontramos um conflitos entre datas ou horarios" RESET);
+            if(compara_todos((*listaEventos)[i], cadastrar) == 1){
+                printf("\n" VERMELHO "Ops! Encontramos um conflitos entre datas ou horarios" RESET "\n");
 
-            }else if(compara_todos((*listaEventos)[i], novo) == 2){
+            }else if(compara_todos((*listaEventos)[i], cadastrar) == 2){
                 for(int j = *qtdEventos - 1; j >= i; j--){
                     (*listaEventos)[j+1] = (*listaEventos)[j];
                 }
-                (*listaEventos)[i] = novo;
+                (*listaEventos)[i] = cadastrar;
                 (*qtdEventos)++;
                 adicionou = true;
                 printf("\n" VERDE "Evento adicionado com sucesso!" RESET "\n");
@@ -204,11 +391,10 @@ void add_evento(Evento **listaEventos, int *qtdEventos){
         }
         if(!adicionou){
             printf("\n" VERDE "Evento adicionado com sucesso!" RESET "\n");
-            (*listaEventos)[(*qtdEventos)] = novo;
+            (*listaEventos)[(*qtdEventos)] = cadastrar;
             (*qtdEventos)++;
         }   
     }
-
 }
 
 //2. Mostra todos os eventos já adicionados
@@ -233,10 +419,7 @@ void busca_data(Evento *listaEventos, int qtdEventos){
 
     int referencia = 0;
 
-    printf("\nInsira uma data (DD MM AAAA): ");
-    scanf("%d %d %d", &busca.data.dia, &busca.data.mes, &busca.data.ano);
-
-    limpar_buffer();
+    insira_data(&busca);
 
     for(int i = 0; i < qtdEventos; i++){
         if(compara_data(listaEventos[i],busca) == 1){
@@ -269,7 +452,7 @@ void busca_descricao(Evento *listaEventos, int qtdEventos){
     if(fgets(descricao, TAM, stdin) != NULL){
         descricao[strcspn(descricao, "\n")] = '\0';
     }else{
-     descricao[0] = '\0';
+        descricao[0] = '\0';
     }
 
     int tam_busca = (int)strlen(descricao);
@@ -333,7 +516,7 @@ void remover_eventos(Evento **listaEventos, int *qtdEventos){
             break;
         }
     }
-
+    
     if(!existe){
         printf("\n" AMARELO "Deculpa, mas a data ou hora de inicio informada não existe dentro da AGENDA!" RESET "\n");
         return;
@@ -359,85 +542,46 @@ void remover_eventos(Evento **listaEventos, int *qtdEventos){
 
 }
 
-// 1.
-/*
-void cadastrar_evento(Evento, **info, *contador){
-    (*contador)++;
-
-    Evento *temp = realloc(info, sizeof(Evento) * (*contador));
-
-    if (temp == NULL) {
-        printf("\n" VERMELHO "Erro ao alocar memória!" RESET "\n");
-        (*contador)--;
-        return;
-    }
-
-    *info = temp;
-
-    Evento *novo = &((*info)[*contador - 1]);
-
-    bool horario_valido = false;
-
-    do {
-        printf("Insira a data (DD MM AAAA): ");
-        scanf("%d %d %d", &novo->data.dia, &novo->data.mes, &novo->data.ano);
-
-        printf("Insira o horário de início (HH MM): ");
-        scanf("%d %d", &novo->inicio.hora, &novo->inicio.minuto);
-
-        printf("Insira o horário de término (HH MM): ");
-        scanf("%d %d", &novo->fim.hora, &novo->fim.minuto);
-
-        int inicio_minutos = novo->inicio.hora * 60 + novo->inicio.minuto;
-        int fim_minutos = novo->fim.hora * 60 + novo->fim.minuto;
-
-        if (fim_minutos <= inicio_minutos) {
-            printf("\n" VERMELHO "O término deve ser após o início. Tente novamente." RESET "\n\n");
-            continue;
-        }
-
-        // Checa conflitos com os eventos anteriores
-        bool conflito = false;
-        for (int i = 0; i < *contador - 1; i++) {
-            if ((*info)[i].data.dia == novo->data.dia && 
-                (*info)[i].data.mes == novo->data.mes && 
-                (*info)[i].data.ano == novo->data.ano) {
-
-                int ex_inicio = (*info)[i].inicio.hora * 60 + (*info)[i].inicio.minuto;
-                int ex_fim = (*info)[i].fim.hora * 60 + (*info)[i].fim.minuto;
-
-                if (inicio_minutos < ex_fim && fim_minutos > ex_inicio) {
-                    conflito = true;
-                    break;
-                }
-            }
-        }
-
-        if (conflito) {
-            printf("\n" VERMELHO "Conflito de horários! Insira outro horário." RESET "\n\n");
-        } else {
-            horario_valido = true;
-        }
-
-    } while (!horario_valido);
-}
-*/
 int main(){
     
     // Compatibilidade dos caracteres especiais
     #ifdef _WIN32
         SetConsoleOutputCP(CP_UTF8);
     #endif
+    
+    Evento *listaEventos = NULL;
 
     int opcao;
-    bool erro = false;
-
-    Evento *listaEventos = malloc(sizeof(Evento));
     int qtdEventos = 0;
 
+    bool erro = false;
+        
+    char *endereco_do_arquivo = usuario();
+
+    arquivo = fopen(endereco_do_arquivo , "r");
+
+    if(arquivo == NULL){
+        printf("\n" AMARELO "" RESET);
+        return 0;
+    }
+
+    if(fscanf(arquivo, "Quantidade de eventos: %d", &qtdEventos) != 1 ){
+        printf("\n" AMARELO "" RESET);
+        return 0;
+    }
+
+    Evento *temp = realloc(listaEventos, sizeof(Evento) * (qtdEventos));
+    if(temp != NULL){
+        listaEventos = temp;
+    }
+
+    for(int i = 0; i < qtdEventos; i++){
+        le_arquivo(arquivo, &listaEventos[i]);
+    }
+
+    fclose(arquivo);
 
     do{
-        printf("\033[H\033[2J");
 
         printf("\n\n");
         printf("╔══════════════════════════════════════════════════╗\n");
@@ -452,7 +596,7 @@ int main(){
         printf("╚══════════════════════════════════════════════════╝\n");
 
         if(erro){
-            printf("\n" VERMELHO "Ops! Essa opção não está no menu, tente novamente." RESET "\n");
+            printf("\n" VERMELHO "Ops! Essa opção não está no menu, tente novamente" RESET "\n");
             erro = false;
         }
 
@@ -500,8 +644,17 @@ int main(){
                 break;
             
             case 6:
-                printf("\n" NEGRITO_BRANCO "Obrigado por usar o sistema! Volte sempre." RESET "\n\n");
+                arquivo = fopen(endereco_do_arquivo, "w");
+                fprintf(arquivo, "Quantidade de eventos: %d\n", qtdEventos);
+                for(int i = 0; i < qtdEventos; i++){
+                    fprintf(arquivo, "Data: %d/%d/%d\n", listaEventos[i].data.dia, listaEventos[i].data.mes, listaEventos[i].data.ano);    
+                    fprintf(arquivo, "Horaio de inicio e fim: %d:%d - %d:%d\n", listaEventos[i].inicio.hora, listaEventos[i].inicio.minuto, listaEventos[i].fim.hora, listaEventos[i].fim.minuto);
+                    fprintf(arquivo, "Descrição: %s\n", listaEventos[i].descricao);
+                    fprintf(arquivo, "Local: %s\n", listaEventos[i].local);
+                }
+                printf("\n" NEGRITO_BRANCO "Obrigado por usar o sistema! Volte sempre" RESET "\n\n");
                 free(listaEventos);
+                fclose(arquivo);
                 return 0;
             default:
                 erro = true;
